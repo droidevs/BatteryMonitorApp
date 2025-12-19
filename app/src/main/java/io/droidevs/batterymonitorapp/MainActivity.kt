@@ -26,13 +26,16 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvPercentage : TextView
     private lateinit var tvStatus : TextView
+    private lateinit var tvVoltage : TextView
 
 
     private val batteryReciever = object : BroadcastReceiver() {
 
         override fun onReceive(p0: Context?, p1: Intent?) {
             Log.i("Charging", "Changed")
-            updateBatteryInfo(intent)
+            runOnUiThread {
+                updateBatteryInfo(intent)
+            }
         }
     }
 
@@ -49,11 +52,14 @@ class MainActivity : AppCompatActivity() {
 
         tvPercentage = binding.tvPercentage
         tvStatus = binding.tvStatus
+        tvVoltage = binding.tvVoltage
 
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+
         registerReceiver(batteryReciever, filter)
 
-        updateBatteryInfo(registerReceiver(null, filter))
+        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        updateBatteryInfo(batteryIntent)
 
     }
 
@@ -88,6 +94,8 @@ class MainActivity : AppCompatActivity() {
             else -> "No Charging"
         }
 
+        val voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
+
         if (level == -1 && scale == -1 && status == -1 && plugged == -1)
             return
 
@@ -95,6 +103,7 @@ class MainActivity : AppCompatActivity() {
 
         tvPercentage.text = "$percentage%"
         tvStatus.text = if (isCharging) "Charging $chargeType" else "Not Charging"
+        tvVoltage.text = "Voltage: $voltage V"
     }
 
     override fun onDestroy() {
